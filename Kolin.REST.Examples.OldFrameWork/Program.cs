@@ -117,7 +117,7 @@ namespace Kolin.REST.Examples.OldFrameWork
             #region Create ValueList Item
             var valueListCreatePath = $"{Constants.RestURL}/REST/valuelists/{Constants.JobsValueListId}/items";
 
-            var vlItem = new ValueListItem { Name = "Test Yeni Değer" };
+            var vlItem = new ValueListItem { Name = "Test Değer" };
 
             request = CreateRequest(valueListCreatePath, "POST", vlItem);
             request.Headers["X-Authentication"] = token.Value;
@@ -130,6 +130,20 @@ namespace Kolin.REST.Examples.OldFrameWork
             var valueListResult = (ValueListItem)deserializer.ReadObject(response.GetResponseStream());
 
             var internalIdOfValueListItem = valueListResult.ID;
+            #endregion
+
+            #region Update ValueListItem Title
+            var valueListUpdatePath = $"{Constants.RestURL}/REST/valuelists/{Constants.JobsValueListId}/items/{internalIdOfValueListItem}/title?_method=PUT";
+
+            request = CreateRequest(valueListUpdatePath, "POST", "Test Yeni Değer");
+            request.Headers["X-Authentication"] = token.Value;
+
+            response = (HttpWebResponse)request.GetResponse();
+
+            deserializer = new DataContractJsonSerializer(typeof(ValueListItem));
+
+            valueListResult = (ValueListItem)deserializer.ReadObject(response.GetResponseStream());
+
             #endregion
 
             #region Set ValueListItem ExternalID
