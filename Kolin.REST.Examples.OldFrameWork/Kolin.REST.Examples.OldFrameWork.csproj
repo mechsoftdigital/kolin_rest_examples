@@ -49,6 +49,8 @@
     <Compile Include="MFWSClient.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RequestData.cs" />
+    <Compile Include="ResponseMessage.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

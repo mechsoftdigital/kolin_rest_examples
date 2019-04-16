@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<application
+			type="server-application"
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			xsi:noNamespaceSchemaLocation="http://www.m-files.com/schemas/appdef-server-v1.xsd">
+  <guid>4ed076bd-b331-4632-b347-a21b4f4e67ba</guid>
+  <name>Kolin.ExtensionOperations.VAF</name>
+  <description></description>
+  <publisher></publisher>
+  <version>0.1</version>
+  <copyright></copyright>
+  <extension-objects>
+    <extension-object>
+      <name>Kolin.ExtensionOperations.VAF</name>
+      <assembly>Kolin.ExtensionOperations.VAF.dll</assembly>
+      <class>Kolin.ExtensionOperations.VAF.VaultApplication</class>
+      <installation-method>Install</installation-method>
+      <uninstallation-method>Uninstall</uninstallation-method>
+      <initialization-method>Initialize</initialization-method>
+      <uninitialization-method>Uninitialize</uninitialization-method>
+      <start-operations-method>StartOperations</start-operations-method>
+    </extension-object>
+  </extension-objects>
+</application>

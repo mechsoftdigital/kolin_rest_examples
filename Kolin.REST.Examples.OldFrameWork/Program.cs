@@ -14,7 +14,7 @@ namespace Kolin.REST.Examples.OldFrameWork
     {
         static void Main(string[] args)
         {
-
+            //Auth object
             var auth = new Authentication
             {
                 Username = Constants.UserName,
@@ -23,6 +23,10 @@ namespace Kolin.REST.Examples.OldFrameWork
                 VaultGuid = Constants.VaultGUID  // Use GUID format with {braces}.
             };
 
+            //External ID Set Path
+            var extensionMethodPath = $"{Constants.RestURL}/REST/vault/extensionmethod/SetExternalId";
+
+            #region Authenticate
             // Create the web request.
             var request = CreateRequest($"{Constants.RestURL}/REST/server/authenticationtokens.aspx", "POST", auth);
 
@@ -32,9 +36,9 @@ namespace Kolin.REST.Examples.OldFrameWork
             // Deserialize the authentication token.
             var deserializer = new DataContractJsonSerializer(typeof(PrimitiveType<string>));
             var token = (PrimitiveType<string>)deserializer.ReadObject(response.GetResponseStream());
+            #endregion
 
-
-            //GET All Employees
+            #region Get All Employees
             var getAllEmployeePath = $"{Constants.RestURL}/REST/Objects/{Constants.EmployeeObjectId}";
 
             request = CreateRequest(getAllEmployeePath, "GET");
@@ -46,6 +50,9 @@ namespace Kolin.REST.Examples.OldFrameWork
             deserializer = new DataContractJsonSerializer(typeof(Results<ObjectVersion>));
 
             var result = (Results<ObjectVersion>)deserializer.ReadObject(response.GetResponseStream());
+            #endregion
+
+            #region Create Employee
 
             var extSystemEmployeeId = Guid.NewGuid().ToString("N");
 
@@ -70,17 +77,16 @@ namespace Kolin.REST.Examples.OldFrameWork
                         TypedValue = new TypedValue{DataType = MFDataType.Lookup, Lookup = new Lookup{Item = Constants.WorkingStatusActiveId, Version = -1 }  }
                     },
 
-                    //Set External System' s ID
-                    new PropertyValue{
-                        PropertyDef = Constants.ExternalIdPropId,
-                        TypedValue = new TypedValue{ DataType = MFDataType.Text, Value = extSystemEmployeeId }
-                    }
+
             },
 
                 Files = new UploadInfo[] { }
             };
 
+
+
             var createPath = $"{Constants.RestURL}/REST/Objects/{Constants.EmployeeObjectId}";
+
 
             //Create Employee Object
             request = CreateRequest(createPath, "POST", creationInfo);
@@ -93,7 +99,22 @@ namespace Kolin.REST.Examples.OldFrameWork
 
             var employeeResult = (ObjectVersion)deserializer.ReadObject(response.GetResponseStream());
 
-            //Crate a valuelist item
+            #endregion
+
+            #region Set Employee ExternalId
+            var extIdData = new RequestData { InternalId = employeeResult.ObjVer.ID.ToString(), ObjectTypeId = Constants.EmployeeObjectId.ToString(), ExternalId = extSystemEmployeeId };
+
+            request = CreateRequest(extensionMethodPath, "POST", extIdData);
+            request.Headers["X-Authentication"] = token.Value;
+
+            response = (HttpWebResponse)request.GetResponse();
+
+            deserializer = new DataContractJsonSerializer(typeof(ResponseMessage));
+
+            var extensionMethodResult = (ResponseMessage)deserializer.ReadObject(response.GetResponseStream());
+            #endregion
+
+            #region Create ValueList Item
             var valueListCreatePath = $"{Constants.RestURL}/REST/valuelists/{Constants.JobsValueListId}/items";
 
             var vlItem = new ValueListItem { Name = "Test Yeni Değer" };
@@ -109,8 +130,49 @@ namespace Kolin.REST.Examples.OldFrameWork
             var valueListResult = (ValueListItem)deserializer.ReadObject(response.GetResponseStream());
 
             var internalIdOfValueListItem = valueListResult.ID;
+            #endregion
+
+            #region Set ValueListItem ExternalID
+            var extValueListId = Guid.NewGuid().ToString("N");
+
+            var data = new RequestData { InternalId = internalIdOfValueListItem.ToString(), ObjectTypeId = Constants.JobsValueListId.ToString(), ExternalId = extValueListId };
+
+            request = CreateRequest(extensionMethodPath, "POST", data);
+            request.Headers["X-Authentication"] = token.Value;
+
+            response = (HttpWebResponse)request.GetResponse();
+
+            deserializer = new DataContractJsonSerializer(typeof(ResponseMessage));
+
+            extensionMethodResult = (ResponseMessage)deserializer.ReadObject(response.GetResponseStream());
+            #endregion
+
+            #region Get By ExternalId
+
+            // /e is important for referring external id
+            var externalEmployeePath = $"{Constants.RestURL}/REST/Objects/{Constants.EmployeeObjectId}/e{extSystemEmployeeId}";
+            var externalValueListPath = $"{Constants.RestURL}/REST/Valuelists/{Constants.JobsValueListId}/items/e{extValueListId}";
+
+            //Get employee
+            request = CreateRequest(externalEmployeePath, "GET");
+            request.Headers["X-Authentication"] = token.Value;
+
+            response = (HttpWebResponse)request.GetResponse();
+
+            deserializer = new DataContractJsonSerializer(typeof(ObjectVersion));
+            employeeResult = (ObjectVersion)deserializer.ReadObject(response.GetResponseStream());
+
+            //Get ValueList Item
+            request = CreateRequest(externalValueListPath, "GET");
+            request.Headers["X-Authentication"] = token.Value;
+
+            response = (HttpWebResponse)request.GetResponse();
+
+            deserializer = new DataContractJsonSerializer(typeof(ValueListItem));
+            valueListResult = (ValueListItem)deserializer.ReadObject(response.GetResponseStream());
 
 
+            #endregion
         }
 
         private static WebRequest CreateRequest(string path, string method, object data = null)
@@ -131,7 +193,7 @@ namespace Kolin.REST.Examples.OldFrameWork
                 using (var ms = new MemoryStream())
                 {
                     serializer.WriteObject(ms, data);
-                    string json = Encoding.Default.GetString(ms.ToArray());
+                    string json = Encoding.UTF8.GetString(ms.ToArray());
                     byte[] byteArray = Encoding.UTF8.GetBytes(json);
 
                     request.ContentType = "application/json";
