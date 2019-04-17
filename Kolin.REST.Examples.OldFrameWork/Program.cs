@@ -114,6 +114,64 @@ namespace Kolin.REST.Examples.OldFrameWork
             var extensionMethodResult = (ResponseMessage)deserializer.ReadObject(response.GetResponseStream());
             #endregion
 
+            #region Update Employee
+            var checkOutPath = $"{Constants.RestURL}/REST/objects/{Constants.EmployeeObjectId}/{employeeResult.ObjVer.ID}/latest/checkedout.aspx?_method=PUT";
+
+            var checkOutType = new PrimitiveType<MFCheckOutStatus>();
+            checkOutType.Value = MFCheckOutStatus.CheckedOut;
+
+            request = CreateRequest(checkOutPath, "POST", checkOutType);
+            request.Headers["X-Authentication"] = token.Value;
+
+            // Get the response.
+            response = (HttpWebResponse)request.GetResponse();
+
+            deserializer = new DataContractJsonSerializer(typeof(ObjectVersion));
+
+            var checkedOutEmployee = (ObjectVersion)deserializer.ReadObject(response.GetResponseStream());
+
+            var updatePropertyPath = $"{Constants.RestURL}/REST/objects/{Constants.EmployeeObjectId}/{checkedOutEmployee.ObjVer.ID}/latest/properties";
+
+            //Add a new field to employee object
+            var tcknProp = new PropertyValue
+            {
+                PropertyDef = Constants.TCKNPropId,
+                TypedValue = new TypedValue { DataType = MFDataType.Text, Value = "32472832270" }
+            };
+
+            var nameProp = new PropertyValue
+            {
+                PropertyDef = Constants.NameSurnamePropId,
+                TypedValue = new TypedValue { DataType = MFDataType.Text, Value = "Rıza Gökay Kıvırcıoğlu" }
+            };
+
+            var props = new PropertyValue[] { nameProp, tcknProp };
+
+            request = CreateRequest(updatePropertyPath, "POST", props);
+            request.Headers["X-Authentication"] = token.Value;
+
+            // Get the response.
+            response = (HttpWebResponse)request.GetResponse();
+
+            deserializer = new DataContractJsonSerializer(typeof(ExtendedObjectVersion));
+
+            var updatedEmployee = (ExtendedObjectVersion)deserializer.ReadObject(response.GetResponseStream());
+
+            //Check in the employee back to the server
+            checkOutType.Value = MFCheckOutStatus.CheckedIn;
+
+            request = CreateRequest(checkOutPath, "POST", checkOutType);
+            request.Headers["X-Authentication"] = token.Value;
+
+            // Get the response.
+            response = (HttpWebResponse)request.GetResponse();
+
+            deserializer = new DataContractJsonSerializer(typeof(ObjectVersion));
+
+            var checkecInEmployee = (ObjectVersion)deserializer.ReadObject(response.GetResponseStream());
+
+            #endregion
+
             #region Create ValueList Item
             var valueListCreatePath = $"{Constants.RestURL}/REST/valuelists/{Constants.JobsValueListId}/items";
 
@@ -187,6 +245,43 @@ namespace Kolin.REST.Examples.OldFrameWork
 
 
             #endregion
+
+            #region Delete Object
+
+            var deletePath = $"{Constants.RestURL}/REST/objects/{Constants.EmployeeObjectId}/{employeeResult.ObjVer.ID}/deleted.aspx?_method=PUT";
+            var deleteData = new PrimitiveType<bool>() { Value = true };
+
+            request = CreateRequest(deletePath, "POST", deleteData);
+            request.Headers["X-Authentication"] = token.Value;
+
+            response = (HttpWebResponse)request.GetResponse();
+
+
+
+            #endregion
+
+            #region Destroy Object
+
+            var destroyPath = $"{Constants.RestURL}/REST/objects/{Constants.EmployeeObjectId}/{employeeResult.ObjVer.ID}/latest.aspx?_method=DELETE&allVersions=true";
+
+            request = CreateRequest(destroyPath, "POST");
+            request.Headers["X-Authentication"] = token.Value;
+
+            response = (HttpWebResponse)request.GetResponse();
+
+
+            #endregion
+
+            #region Delete ValueList Item
+
+            var valueListDeletePath = $"{Constants.RestURL}/REST/valuelists/{Constants.JobsValueListId}/items/{internalIdOfValueListItem}?_method=DELETE";
+
+            request = CreateRequest(valueListDeletePath, "POST");
+            request.Headers["X-Authentication"] = token.Value;
+
+            response = (HttpWebResponse)request.GetResponse();
+
+            #endregion
         }
 
         private static WebRequest CreateRequest(string path, string method, object data = null)
@@ -194,6 +289,7 @@ namespace Kolin.REST.Examples.OldFrameWork
             // Create the web request.
             var request = (HttpWebRequest)WebRequest.Create(path);
             request.Method = method;
+            request.ContentType = "application/json";
 
             if (data != null)
             {
@@ -201,7 +297,7 @@ namespace Kolin.REST.Examples.OldFrameWork
                 var serializer = new DataContractJsonSerializer(data.GetType());
 
                 // .NET 4.0 and above way of writing stuff to Request.!
-                // serializer.WriteObject(request.GetRequestStream(), data);
+                //  serializer.WriteObject(request.GetRequestStream(), data);
 
                 //  .NET 3.5 and below  way of Writing stuff to Request.!
                 using (var ms = new MemoryStream())
@@ -210,7 +306,6 @@ namespace Kolin.REST.Examples.OldFrameWork
                     string json = Encoding.UTF8.GetString(ms.ToArray());
                     byte[] byteArray = Encoding.UTF8.GetBytes(json);
 
-                    request.ContentType = "application/json";
 
                     using (var dataStream = request.GetRequestStream())
                     {
@@ -219,6 +314,10 @@ namespace Kolin.REST.Examples.OldFrameWork
                     }
 
                 }
+            }
+            else
+            {
+                request.ContentLength = 0;
             }
 
             return request;

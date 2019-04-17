@@ -14,7 +14,7 @@ namespace Kolin.REST.Examples
         {
             //ExamplesWithWrapperLibrary();
 
-            //ExamplesWithoutWrapperLibrary();
+            ExamplesWithoutWrapperLibrary();
 
         }
 
@@ -270,7 +270,7 @@ namespace Kolin.REST.Examples
 
 
             //Destroy an object
-            var destroyRequest = new RestSharp.RestRequest($"/objects/{Constants.EmployeeObjectId}/{foundEmployee.ObjVer.ID}/lastest.aspx?_method=DELETE&allVersions=true", RestSharp.Method.POST);
+            var destroyRequest = new RestSharp.RestRequest($"/objects/{Constants.EmployeeObjectId}/{foundEmployee.ObjVer.ID}/latest.aspx?_method=DELETE&allVersions=true", RestSharp.Method.POST);
            destroyRequest.AddHeader("X-Authentication", token);
 
             var destroyResponse = client.Execute<ObjectVersion>(destroyRequest);
