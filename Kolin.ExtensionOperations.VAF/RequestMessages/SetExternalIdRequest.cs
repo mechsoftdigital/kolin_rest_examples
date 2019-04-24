@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Kolin.ExtensionOperations.VAF
 {
-    public class RequestData
+    public class SetExternalIdRequest
     {
         public string InternalId { get; set; }
         public string ObjectTypeId { get; set; }

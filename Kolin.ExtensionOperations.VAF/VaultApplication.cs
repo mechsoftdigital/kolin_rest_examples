@@ -25,11 +25,11 @@ namespace Kolin.ExtensionOperations.VAF
             try
             {
 
-                RequestData requestData;
+                SetExternalIdRequest requestData;
 
                 try
                 {
-                    requestData = JsonConvert.DeserializeObject<RequestData>(env.Input);
+                    requestData = JsonConvert.DeserializeObject<SetExternalIdRequest>(env.Input);
                 }
                 catch (Exception Ex)
                 {
@@ -68,6 +68,66 @@ namespace Kolin.ExtensionOperations.VAF
 
             return response;
 
+        }
+
+        [VaultExtensionMethod("RenameValueListItem", RequiredVaultAccess = MFVaultAccess.MFVaultAccessNone)]
+        public string RenameValueListItem(EventHandlerEnvironment env)
+        {
+            string response;
+            ResponseMessage message = new ResponseMessage();
+
+            try
+            {
+
+                RenameValueListItemRequest requestData;
+
+                try
+                {
+                    requestData = JsonConvert.DeserializeObject<RenameValueListItemRequest>(env.Input);
+                }
+                catch (Exception Ex)
+                {
+                    SysUtils.ReportErrorToEventLog(Ex);
+                    message.Code = 500;
+                    message.Description = "Input was not in expected format.";
+
+                    response = JsonConvert.SerializeObject(message);
+                    return response;
+                }
+
+                ValueListItem valueListItem;
+
+                if (requestData.IsDisplayID)
+                {
+                    valueListItem = PermanentVault.ValueListItemOperations.GetValueListItemByDisplayID(requestData.ValueListId, requestData.ItemId);
+                }
+                else
+                {
+                    valueListItem = PermanentVault.ValueListItemOperations.GetValueListItemByID(requestData.ValueListId, Convert.ToInt32(requestData.ItemId));
+                }
+
+                valueListItem.Name = requestData.Name;
+
+                PermanentVault.ValueListItemOperations.UpdateValueListItem(valueListItem);
+
+                message.ResponseObject = valueListItem;
+                message.Code = 200;
+                message.Description = "Successfully renamed item.";
+                response = JsonConvert.SerializeObject(message);
+
+            }
+            catch (Exception Ex)
+            {
+
+                message.Code = 500;
+                message.Description = Ex.Message;
+                message.ResponseObject = null;
+
+                response = JsonConvert.SerializeObject(message);
+            }
+
+
+            return response;
         }
 
 

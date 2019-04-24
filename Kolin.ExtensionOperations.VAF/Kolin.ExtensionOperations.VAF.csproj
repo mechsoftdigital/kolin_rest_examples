@@ -59,7 +59,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RequestData.cs" />
+    <Compile Include="RequestMessages\RenameValueListItemRequest.cs" />
+    <Compile Include="RequestMessages\SetExternalIdRequest.cs" />
     <Compile Include="ResponseMessage.cs" />
     <Compile Include="VaultApplication.cs" />
   </ItemGroup>
